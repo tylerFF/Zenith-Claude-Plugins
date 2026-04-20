@@ -17,8 +17,7 @@ selections template. Follow this workflow exactly.
 ## Setup: where the Python helpers live
 
 All Python helpers for this skill live alongside this SKILL.md in a `scripts/`
-directory. Run them with `python3` from the skill's directory, or use the
-absolute path. The skill's files are:
+directory. Run them with `python3` (macOS/Linux) or `python` (Windows — the binary is registered as `python`, not `python3`, by the Windows installer). Prefer the absolute path if in doubt: `python3 "$CLAUDE_PLUGIN_DIR/scripts/<name>.py"` on Unix, or use whatever Python executable is on PATH on Windows. The skill's files are:
 
 - `scripts/url_parser.py` — parse URLs/IDs
 - `scripts/master_guard.py` — master template safety check
@@ -34,11 +33,9 @@ All helpers are stdlib-only. No pip install needed at runtime.
 The master template must NEVER be edited by default. Before any other action:
 
 1. Parse the designer's URL or ID using `url_parser.parse_sheet_reference`.
-2. Get the Smartsheet token by calling `smartsheet_client.get_smartsheet_token_from_1password()`. This runs `op read` under the hood.
-3. If the parsed reference is a permalink (not numeric), call `smartsheet_client.resolve_permalink(token, slug)` to get the numeric sheet ID.
-4. Run `master_guard.check_master_guard(sheet_id, designer_message)`. Pass the designer's full message text as `designer_message`.
-5. If `result.allowed is False`: print `result.reason` verbatim and STOP. Do not run pre-flight checks, do not fetch the sheet, do not snapshot.
-6. If `result.allowed is True` and `result.banner` is not None: keep the banner text and prepend it to your final summary.
+2. **If `reference.kind == "numeric"`**: immediately run `master_guard.check_master_guard(reference.value, designer_message)`. If `result.allowed is False`: print `result.reason` verbatim and STOP. No token fetch, no sheet fetch, no snapshot. If allowed, proceed to step 3 knowing the sheet_id is `reference.value`.
+3. **If `reference.kind == "permalink"`**: fetch the Smartsheet token via `smartsheet_client.get_smartsheet_token_from_1password()`. Then call `smartsheet_client.resolve_permalink(token, reference.value)` to get the numeric ID. THEN run `master_guard.check_master_guard(numeric_id, designer_message)`. Same stop behavior on `allowed is False`.
+4. If the guard passed with a banner (`result.banner is not None`): keep the banner text and prepend it to your final summary.
 
 ## 1. Pre-flight checks
 
@@ -131,7 +128,7 @@ Record the designer's answers. These become rows-to-add in step 6.
 
 If any call raises `SmartsheetError`, stop immediately. Do not continue. Report:
 
-> "I deleted X rows, then a Smartsheet error stopped me: {error}. The rest is untouched. You can re-run the skill or say 'undo' to restore what I deleted."
+> "I was deleting rows when a Smartsheet error stopped me mid-way: {error}. Some rows may have been deleted before the failure; the rest are untouched. You can re-run the skill (delete_rows is idempotent — it ignores already-deleted IDs) or say 'undo' to restore from the snapshot."
 
 ## 7. Report
 
@@ -166,8 +163,23 @@ If the master guard banner was set in step 0, prepend it to this output.
 If the designer says "undo" or "restore [room]" in the SAME session:
 
 1. Recall the `Snapshot` from step 2.
-2. For "undo everything": re-add all deleted rows via `snapshot.rows_for_restore(snapshot, [all_deleted_root_ids])` plus `smartsheet_client.add_rows`. Also delete any rows the skill added in step 6.
-3. For "restore [room]": scope the `rows_for_restore` call to just that room's original ID.
+2. For "undo everything":
+   - Call `snapshot.rows_for_restore(snapshot, [all_deleted_root_ids])` to get an ordered list of row payloads. Each payload has `_original_id`, `_original_parent_id`, `cells`, and `toBottom` fields.
+   - The Smartsheet API requires literal `parentId` (not `_original_parent_id`) and does NOT accept those underscore-prefixed fields. You must translate IDs in a loop:
+
+```python
+id_map = {}  # original id -> new id
+for payload in restore_payloads:
+    api_row = {"cells": payload["cells"], "toBottom": payload["toBottom"]}
+    if payload["_original_parent_id"] is not None:
+        api_row["parentId"] = id_map[payload["_original_parent_id"]]
+    new_ids = smartsheet_client.add_rows(token, sheet_id, [api_row])
+    id_map[payload["_original_id"]] = new_ids[0]
+```
+
+   - This is N `add_rows` calls (one per row). Unavoidable for hierarchy restoration — you can't know a parent's new ID until after you POST it.
+   - Also delete any rows the skill added in step 6.
+3. For "restore [room]": scope the `rows_for_restore` call to just that room's original ID. The same ID-translation loop applies — just scoped to one room's root ID.
 
 Row IDs will change on restore; this is documented and expected.
 

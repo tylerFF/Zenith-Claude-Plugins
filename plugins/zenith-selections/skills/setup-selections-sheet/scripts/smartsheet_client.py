@@ -1,6 +1,7 @@
 """Smartsheet REST API v2 client (stdlib only).
 
-Focused surface: read a sheet, batch-delete rows, batch-add rows,
+Focused surface: read a sheet, batch-delete rows, add rows (single POST;
+Smartsheet's 500-row limit is not a practical concern for this skill),
 resolve permalinks to numeric IDs. Auth token is fetched from 1Password
 via the `op` CLI.
 """

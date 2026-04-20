@@ -49,10 +49,10 @@ def snapshot_sheet(analyzer: SheetAnalyzer) -> Snapshot:
                 row_number=raw.get("rowNumber", 0),
                 # Strip read-only cell values from formula columns at snapshot time
                 cells=[
-                    {"columnId": c["columnId"], "value": c.get("value")}
+                    {"columnId": c["columnId"], "value": c.get("value") if c.get("value") is not None else c.get("displayValue")}
                     for c in raw.get("cells", [])
                     if c.get("columnId") not in formula_col_ids
-                    and c.get("value") is not None
+                    and (c.get("value") is not None or c.get("displayValue") is not None)
                 ],
             )
         )

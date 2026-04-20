@@ -13,6 +13,18 @@ def analyzer():
     return SheetAnalyzer(json.loads(FIXTURE.read_text()))
 
 
+class TestSnapshotCells:
+    def test_captures_cells_with_only_display_value(self, analyzer):
+        # In the fixture, Location cells (columnId=101) are displayValue-only.
+        # These should survive snapshot_sheet.
+        snap = snapshot_sheet(analyzer)
+        hall_bath_snap = next(r for r in snap.rows if r.id == 2001)
+        # Location cell has columnId=101 (from fixture)
+        loc_cells = [c for c in hall_bath_snap.cells if c["columnId"] == 101]
+        assert len(loc_cells) > 0
+        assert loc_cells[0]["value"] is not None
+
+
 class TestSnapshot:
     def test_captures_all_rows(self, analyzer):
         snap = snapshot_sheet(analyzer)
