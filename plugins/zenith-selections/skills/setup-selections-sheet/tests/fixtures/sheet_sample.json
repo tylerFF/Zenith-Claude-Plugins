@@ -1,0 +1,138 @@
+{
+  "id": 228526784466820,
+  "name": "TEST Wentzel Selections",
+  "columns": [
+    {"id": 100, "title": "Category", "type": "TEXT_NUMBER"},
+    {"id": 101, "title": "Location", "type": "TEXT_NUMBER"},
+    {"id": 102, "title": "Description", "type": "TEXT_NUMBER"}
+  ],
+  "rows": [
+    {
+      "id": 1001,
+      "rowNumber": 1,
+      "cells": [
+        {"columnId": 100, "value": "-"},
+        {"columnId": 101, "displayValue": "Everywhere (in scope)"},
+        {"columnId": 102, "value": "Everywhere (in scope)"}
+      ]
+    },
+    {
+      "id": 1002,
+      "rowNumber": 2,
+      "parentId": 1001,
+      "cells": [
+        {"columnId": 100, "value": "Electrical"},
+        {"columnId": 101, "displayValue": "Everywhere (in scope)"},
+        {"columnId": 102, "value": "Electrical"}
+      ]
+    },
+    {
+      "id": 2001,
+      "rowNumber": 3,
+      "cells": [
+        {"columnId": 100, "value": "-"},
+        {"columnId": 101, "displayValue": "Hall Bathroom"},
+        {"columnId": 102, "value": "Hall Bathroom"}
+      ]
+    },
+    {
+      "id": 2002,
+      "rowNumber": 4,
+      "parentId": 2001,
+      "cells": [
+        {"columnId": 100, "value": "Plumbing"},
+        {"columnId": 101, "displayValue": "Hall Bathroom"},
+        {"columnId": 102, "value": "Faucet"}
+      ]
+    },
+    {
+      "id": 2003,
+      "rowNumber": 5,
+      "parentId": 2001,
+      "cells": [
+        {"columnId": 100, "value": "Plumbing"},
+        {"columnId": 101, "displayValue": "Hall Bathroom"},
+        {"columnId": 102, "value": "Sink"}
+      ]
+    },
+    {
+      "id": 2004,
+      "rowNumber": 6,
+      "parentId": 2001,
+      "cells": [
+        {"columnId": 100, "value": "Plumbing"},
+        {"columnId": 101, "displayValue": "Hall Bathroom"},
+        {"columnId": 102, "value": "Toilet"}
+      ]
+    },
+    {
+      "id": 2005,
+      "rowNumber": 7,
+      "parentId": 2001,
+      "cells": [
+        {"columnId": 100, "value": "Accessories"},
+        {"columnId": 101, "displayValue": "Hall Bathroom"},
+        {"columnId": 102, "value": "Bathroom Accessories"}
+      ]
+    },
+    {
+      "id": 2006,
+      "rowNumber": 8,
+      "parentId": 2005,
+      "cells": [
+        {"columnId": 100, "value": "Accessories"},
+        {"columnId": 101, "displayValue": "Hall Bathroom"},
+        {"columnId": 102, "value": "24\" Towel Bar"}
+      ]
+    },
+    {
+      "id": 2007,
+      "rowNumber": 9,
+      "parentId": 2005,
+      "cells": [
+        {"columnId": 100, "value": "Accessories"},
+        {"columnId": 101, "displayValue": "Hall Bathroom"},
+        {"columnId": 102, "value": "TP Holder"}
+      ]
+    },
+    {
+      "id": 3001,
+      "rowNumber": 10,
+      "cells": [
+        {"columnId": 100, "value": "-"},
+        {"columnId": 101, "displayValue": "Kitchen/Bar"},
+        {"columnId": 102, "value": "Kitchen/Bar"}
+      ]
+    },
+    {
+      "id": 3002,
+      "rowNumber": 11,
+      "parentId": 3001,
+      "cells": [
+        {"columnId": 100, "value": "Plumbing"},
+        {"columnId": 101, "displayValue": "Kitchen/Bar"},
+        {"columnId": 102, "value": "Sink"}
+      ]
+    },
+    {
+      "id": 3003,
+      "rowNumber": 12,
+      "parentId": 3001,
+      "cells": [
+        {"columnId": 100, "value": "Plumbing"},
+        {"columnId": 101, "displayValue": "Kitchen/Bar"},
+        {"columnId": 102, "value": "Faucet"}
+      ]
+    },
+    {
+      "id": 3004,
+      "rowNumber": 13,
+      "parentId": 3001,
+      "cells": [
+        {"columnId": 100, "value": "Surfaces"},
+        {"columnId": 101, "displayValue": "Kitchen/Bar"},
+        {"columnId": 102, "value": "Countertop"}
+      ]
+    }
+  ]
+}
