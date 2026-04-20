@@ -8,7 +8,6 @@ via the `op` CLI.
 import json
 import subprocess
 import urllib.error
-import urllib.parse
 import urllib.request
 from typing import List, Dict, Any
 
@@ -60,7 +59,13 @@ def _request(token: str, method: str, path: str, body: Any = None) -> dict:
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
-            return json.loads(resp.read())
+            try:
+                raw = resp.read()
+                return json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise SmartsheetError(
+                    f"Smartsheet API {method} {path} returned non-JSON response: {raw[:200]!r}"
+                ) from exc
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="replace")
         raise SmartsheetError(
@@ -99,9 +104,8 @@ def delete_rows(token: str, sheet_id: int, row_ids: List[int]) -> int:
     total = 0
     for i in range(0, len(row_ids), DELETE_BATCH_SIZE):
         chunk = row_ids[i : i + DELETE_BATCH_SIZE]
-        qs = urllib.parse.urlencode(
-            {"ids": ",".join(str(x) for x in chunk), "ignoreRowsNotFound": "true"}
-        )
+        ids_str = ",".join(str(x) for x in chunk)
+        qs = f"ids={ids_str}&ignoreRowsNotFound=true"
         result = _request(token, "DELETE", f"/sheets/{sheet_id}/rows?{qs}")
         total += len(result.get("result", []))
     return total
