@@ -60,7 +60,8 @@ def check_master_guard(sheet_id: Union[str, int], designer_message: str) -> Guar
     reason = (
         f"This is the Master Template (`{MASTER_TEMPLATE_NAME}`). "
         "The skill won't edit it by default. "
-        f"If you're sure, include the phrase `{MASTER_EDIT_PHRASE}` in your message. "
+        f"If you're sure you want to modify the master template, re-run your request "
+        f"and include the phrase `{MASTER_EDIT_PHRASE}` in your message. "
         "More likely: you want a per-project copy. In Smartsheet, right-click "
         "the master, choose 'Save as New', rename it, and paste that URL instead."
     )

@@ -23,6 +23,14 @@ class TestIsMasterTemplate:
     def test_rejects_empty_string(self):
         assert is_master_template("") is False
 
+    def test_whitespace_padded_id_matches(self):
+        # int() strips whitespace — this is intentional over-protection.
+        assert is_master_template(" 8909191432693636 ") is True
+
+    def test_plus_prefixed_id_matches(self):
+        # int() accepts leading '+' — over-protection, not a bypass.
+        assert is_master_template("+8909191432693636") is True
+
 class TestCheckMasterGuard:
     def test_non_master_sheet_always_allowed(self):
         result = check_master_guard(
@@ -64,6 +72,19 @@ class TestCheckMasterGuard:
             sheet_id="8909191432693636",
             designer_message="MASTER EDITOR should handle this",
         )
+        assert result.allowed is False
+
+    def test_phrase_is_exact_match_not_substring_left_boundary(self):
+        # "REMASTER EDIT" should NOT trigger — the \b before MASTER is
+        # not a word boundary (R precedes M, both word chars).
+        result = check_master_guard(
+            sheet_id="8909191432693636",
+            designer_message="REMASTER EDIT this shouldn't work",
+        )
+        assert result.allowed is False
+
+    def test_none_message_on_master_is_blocked(self):
+        result = check_master_guard(sheet_id="8909191432693636", designer_message=None)
         assert result.allowed is False
 
     def test_phrase_embedded_mid_sentence(self):
