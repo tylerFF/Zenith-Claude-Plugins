@@ -1,0 +1,8 @@
+{
+  "name": "zenith-selections",
+  "version": "0.1.0",
+  "description": "Tailor a per-project Smartsheet selections sheet from a free-form scope description.",
+  "author": {
+    "name": "Zenith Design + Build"
+  }
+}
