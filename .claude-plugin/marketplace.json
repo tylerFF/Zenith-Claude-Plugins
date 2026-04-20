@@ -1,0 +1,16 @@
+{
+  "name": "zenith-claude-plugins",
+  "owner": {
+    "name": "Zenith Design + Build"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for Zenith Design + Build internal workflows."
+  },
+  "plugins": [
+    {
+      "name": "zenith-selections",
+      "source": "./plugins/zenith-selections",
+      "description": "Tailor a per-project Smartsheet selections sheet from a free-form scope description."
+    }
+  ]
+}
