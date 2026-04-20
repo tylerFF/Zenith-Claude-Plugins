@@ -1,0 +1,110 @@
+# Zenith Claude Code + 1Password + Plugin Marketplace setup (Windows)
+#
+# BEFORE SENDING TO A DESIGNER:
+#   1. Copy this file to `zenith-claude-setup.ps1` (without .template).
+#   2. Paste the 1Password service account token where it says REPLACE_ME.
+#   3. DM the .ps1 file to the designer (never commit the copy).
+#
+# Designer usage: right-click the .ps1 file in Explorer -> Run with PowerShell.
+
+$ErrorActionPreference = "Stop"
+
+# ============ TYLER EDITS THIS LINE ============
+$ServiceAccountToken = "ops_REPLACE_ME"
+# ===============================================
+
+$MarketplaceRepo = "tylerFF/Zenith-Claude-Plugins"
+
+function Section($m) { Write-Host "`n== $m ==" -ForegroundColor Cyan }
+function Ok($m)      { Write-Host "[OK]  $m" -ForegroundColor Green }
+function Warn($m)    { Write-Host "[!!]  $m" -ForegroundColor Yellow }
+function Die($m)     { Write-Host "[ERR] $m" -ForegroundColor Red; exit 1 }
+
+if ($ServiceAccountToken -eq "ops_REPLACE_ME" -or [string]::IsNullOrWhiteSpace($ServiceAccountToken)) {
+    Die "No token embedded. Request an updated copy of this script from Tyler."
+}
+
+# --- 1. winget sanity ---
+Section "Checking winget"
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Die "winget not available. Update Windows or install App Installer from Microsoft Store."
+}
+
+# --- 2. 1Password CLI ---
+Section "Installing 1Password CLI (op)"
+if (-not (Get-Command op -ErrorAction SilentlyContinue)) {
+    winget install --id AgileBits.1Password.CLI -e --silent `
+        --accept-source-agreements --accept-package-agreements
+}
+$env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
+            [Environment]::GetEnvironmentVariable("Path","User")
+if (-not (Get-Command op -ErrorAction SilentlyContinue)) {
+    Die "op CLI install completed but binary not on PATH. Restart PowerShell and re-run."
+}
+Ok "op $(op --version)"
+
+# --- 3. Python 3 ---
+Section "Installing Python 3"
+if (-not (Get-Command python3 -ErrorAction SilentlyContinue) -and -not (Get-Command python -ErrorAction SilentlyContinue)) {
+    winget install --id Python.Python.3.12 -e --silent `
+        --accept-source-agreements --accept-package-agreements
+}
+$env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
+            [Environment]::GetEnvironmentVariable("Path","User")
+$py = Get-Command python3 -ErrorAction SilentlyContinue
+if (-not $py) { $py = Get-Command python -ErrorAction SilentlyContinue }
+if (-not $py) { Die "Python install completed but binary not on PATH. Restart PowerShell and re-run." }
+Ok "Python $((& $py.Source --version).Split()[-1])"
+
+# --- 4. Claude Code sanity check ---
+Section "Checking Claude Code"
+if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
+    Die "Claude Code not found. Install from https://claude.com/download then re-run."
+}
+Ok "Claude Code $(claude --version)"
+
+# --- 5. Save the service account token ---
+Section "Saving Zenith 1Password service account token"
+[Environment]::SetEnvironmentVariable("OP_SERVICE_ACCOUNT_TOKEN", $ServiceAccountToken, "User")
+$env:OP_SERVICE_ACCOUNT_TOKEN = $ServiceAccountToken
+Ok "OP_SERVICE_ACCOUNT_TOKEN set (User scope, persists across reboots)"
+
+# --- 6. Verify token ---
+Section "Testing token"
+$vaultsJson = & op vault list --format=json 2>&1
+if ($LASTEXITCODE -ne 0) { Die "Token rejected by 1Password: $vaultsJson" }
+$vaults = $vaultsJson | ConvertFrom-Json
+Ok "Accessible vaults:"
+$vaults | ForEach-Object { Write-Host "    - $($_.name)" }
+if (-not ($vaults | Where-Object { $_.name -eq "Zenith Automations" })) {
+    Warn "'Zenith Automations' is NOT in the accessible list. Service account needs read access to it."
+}
+
+# --- 7. Register the plugin marketplace in Claude Code ---
+Section "Registering Zenith plugin marketplace"
+# The exact CLI command varies slightly between Claude Code versions.
+# Try both known forms; ignore errors on the non-matching one.
+$added = $false
+try {
+    claude plugin marketplace add $MarketplaceRepo 2>$null
+    if ($LASTEXITCODE -eq 0) { $added = $true }
+} catch {}
+if (-not $added) {
+    try {
+        claude /plugin marketplace add $MarketplaceRepo 2>$null
+        if ($LASTEXITCODE -eq 0) { $added = $true }
+    } catch {}
+}
+if ($added) {
+    Ok "Marketplace registered: $MarketplaceRepo"
+} else {
+    Warn "Couldn't auto-register the marketplace. In Claude Code, run:  /plugin marketplace add $MarketplaceRepo"
+}
+
+# --- 8. Done ---
+Section "Setup complete"
+Write-Host "In Claude Code, run:" -ForegroundColor White
+Write-Host "    /plugin install zenith-selections" -ForegroundColor White
+Write-Host ""
+Write-Host "Then ask Claude Code:" -ForegroundColor White
+Write-Host '    "set up selections for my new project, here is the sheet URL ..."' -ForegroundColor White
